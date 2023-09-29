@@ -287,7 +287,7 @@ class MujocoObject(MujocoModel):
         return {
             "type": "free",
         }
-    
+
     def get_bounding_box_half_size(self):
         raise NotImplementedError
 
@@ -582,6 +582,6 @@ class MujocoGeneratedObject(MujocoObject):
 
     def horizontal_radius(self):
         raise NotImplementedError
-        
+
     def get_bounding_box_half_size(self):
         return np.array([self.horizontal_radius, self.horizontal_radius, 0.]) - self.bottom_offset
