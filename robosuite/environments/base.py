@@ -131,6 +131,9 @@ class MujocoEnv(metaclass=EnvMeta):
         self.model_timestep = None
         self.control_timestep = None
         self.deterministic_reset = False  # Whether to add randomized resetting of objects / robot joints
+        self.sim_steps = 0
+        self.sim_elapsed_time = 0
+
 
         self.renderer = renderer
         self.renderer_config = renderer_config
@@ -337,6 +340,9 @@ class MujocoEnv(metaclass=EnvMeta):
         self.timestep = 0
         self.done = False
 
+        self.sim_steps = 0
+        self.sim_elapsed_time = 0
+
         # Empty observation cache and reset all observables
         self._obs_cache = {}
         for observable in self._observables.values():
@@ -452,6 +458,9 @@ class MujocoEnv(metaclass=EnvMeta):
                 self.sim.step()
             self._update_observables()
             policy_step = False
+
+            self.sim_steps += 1
+            self.sim_elapsed_time += self.model_timestep
 
         # Note: this is done all at once to avoid floating point inaccuracies
         self.cur_time += self.control_timestep

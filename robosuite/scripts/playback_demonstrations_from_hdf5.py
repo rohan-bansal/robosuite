@@ -107,4 +107,7 @@ if __name__ == "__main__":
                     env.viewer.update()
                 env.render()
 
+        print("Steps", env.sim_steps)
+        print("Elapsed Time", env.sim_elapsed_time)
+
     f.close()
