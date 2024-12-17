@@ -127,6 +127,9 @@ class MujocoEnv(metaclass=EnvMeta):
         self.control_timestep = None
         self.deterministic_reset = False  # Whether to add randomized resetting of objects / robot joints
 
+        self.sim_steps = 0
+        self.sim_elapsed_time = 0
+
         self.renderer = renderer
         self.renderer_config = renderer_config
 
@@ -307,6 +310,9 @@ class MujocoEnv(metaclass=EnvMeta):
         self.timestep = 0
         self.done = False
 
+        self.sim_steps = 0
+        self.sim_elapsed_time = 0
+
         # Empty observation cache and reset all observables
         self._obs_cache = {}
         for observable in self._observables.values():
@@ -361,7 +367,7 @@ class MujocoEnv(metaclass=EnvMeta):
 
         return observations
 
-    def step(self, action):
+    def step(self, action, control_freq=None):
         """
         Takes a step in simulation with control command @action.
         Args:
@@ -386,6 +392,10 @@ class MujocoEnv(metaclass=EnvMeta):
         # or an actual policy update
         policy_step = True
 
+        if control_freq is not None:
+            self.control_freq = control_freq
+            self.control_timestep = 1.0 / control_freq
+
         # Loop through the simulation at the model timestep rate until we're ready to take the next policy step
         # (as defined by the control frequency specified at the environment level)
         for i in range(int(self.control_timestep / self.model_timestep)):
@@ -394,6 +404,9 @@ class MujocoEnv(metaclass=EnvMeta):
             self.sim.step()
             self._update_observables()
             policy_step = False
+
+            self.sim_steps += 1
+            self.sim_elapsed_time += self.model_timestep
 
         # Note: this is done all at once to avoid floating point inaccuracies
         self.cur_time += self.control_timestep
