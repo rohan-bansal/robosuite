@@ -7,7 +7,7 @@ from robosuite.utils.mjcf_utils import xml_path_completion
 
 import pathlib
 
-absolute_path = pathlib.Path(__file__).parent.parent.parent.parent.absolute()
+absolute_path = pathlib.Path(__file__).parent.parent.parent.absolute()
 
 from robosuite.environments.libero.base_object import (
     register_visual_change_object,
