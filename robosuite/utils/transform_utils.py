@@ -457,6 +457,12 @@ def pose2mat(pose):
     homo_pose_mat[3, 3] = 1.0
     return homo_pose_mat
 
+def quat2col(quat):
+    """
+    quaternion to 2 columns of rotation matrix - useful for state representation
+    """
+    mat = quat2mat(quat)
+    return np.concatenate([mat[:, 0], mat[:, 1]])
 
 @jit_decorator
 def quat2mat(quaternion):
