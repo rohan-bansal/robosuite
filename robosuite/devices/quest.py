@@ -4,8 +4,6 @@ import threading
 import numpy as np
 import quaternion
 
-
-
 from oculus_reader import OculusReader
 
 from robosuite.devices import Device
@@ -20,16 +18,13 @@ class Quest(Device):
             robots: the robots in the robosuite environment
             debug:
         """
-
-
         self.robots = robots
-
         self.debug = debug
 
         # Define reference frames and transforms
 
-        # TODO: we don't need these anymore
-        #  Default offset
+
+        # Default offset
         controller_offset = np.array([[1, 0, 0],
                                       [0, 1, 0],
                                       [0, 0, 1]])
@@ -49,7 +44,6 @@ class Quest(Device):
         # TODO these variables below can perhaps be made local variables and not class variables
         self.trigger_pressed = False
         self.initialize_pose = True
-
 
         # state variable used to support user-commanded reset of environment
         self.reset_state = 0
@@ -89,10 +83,12 @@ class Quest(Device):
         self.robot_origin = None
         self.vr_origin = None
         self.vr_state = None
-        self.prev_controller_state = None
+        self.prev_teleop_info = None
 
         if self.robots is not None:
             self.set_robot_transform()
+
+        self._display_controls()
 
 
     def start_control(self):
@@ -116,9 +112,9 @@ class Quest(Device):
         self.ee_init_pos = np.array([current_pos[0], current_pos[1], current_pos[2]])
         self.ee_init_rot = np.quaternion(current_quat[3], current_quat[0], current_quat[1], current_quat[2])
 
-        if self.prev_controller_state is None:
+        if self.prev_teleop_info is None:
             target_pose = current_pos.tolist() + current_quat.tolist()
-            self.prev_controller_state = dict(target_pose=target_pose, target_pos=current_pos.tolist(),
+            self.prev_teleop_info = dict(target_pose=target_pose, target_pos=current_pos.tolist(),
                                     target_ori=current_quat.tolist(), dpos=[0,0,0], gripper_act=[-1], grasp = -1,
                                               reset=self.reset_state)
 
@@ -129,9 +125,7 @@ class Quest(Device):
         self.trigger_pressed = False
         self.initialize_pose = True
 
-
-
-        self.prev_controller_state = None
+        self.prev_teleop_info = None
 
         self.set_robot_transform()
 
@@ -184,8 +178,6 @@ class Quest(Device):
 
         """
         with self.controller_state_lock:
-            # self.grip_pressed = False
-            # self.trigger_pressed = False
             controllers = self.oculus_reader.get_controller_inputs()
 
             while not controllers:  # busy wait for the headset to wake up
@@ -194,7 +186,7 @@ class Quest(Device):
 
             for controller in controllers:
                 # TODO: for now, we ignore the left controller, however this needs to be changed in the future,
-                # TODO: for example, for bimanual teleop
+                #  for example, for bimanual teleop
                 if controller == "LeftController":
                     continue
                 controller_state = controllers[controller]
@@ -204,21 +196,34 @@ class Quest(Device):
                 # Grip, used for gripper control
                 if controller_state["Grip"]:
                     self.grip_pressed = True
+                    gripper_act = controller_state["GripValue"]
+                    # TODO (NR): maybe the threshold for grasp should be set in config or somewhere else
+                    if gripper_act > 0.3:
+                        grasp = 1
+                    else:
+                        grasp = -1
                 else:
                     self.grip_pressed = False
+                    gripper_act = 0.0
+                    grasp = -1
 
                 # Primary ('A') button, used to decide whether to save a demo
-                if controller_state["PrimaryButton"]:
-                    save_demo = True
-                    print("Saving")
-                else:
-                    save_demo = False
+                save_demo = True if controller_state["PrimaryButton"] else False
 
                 # Secondary ('B') button, use to delete the currently recording demo
-                if controller_state["SecondaryButton"]:
-                    delete_demo = True
-                else:
+                delete_demo = True if controller_state["SecondaryButton"] else False
+
+                # If both save and delete buttons are pressed, choose to save
+                if save_demo and delete_demo:
                     delete_demo = False
+
+                # If we are saving or deleting, reset state
+                reset = True if (save_demo or delete_demo) else False
+
+                # Set these values first
+                teleop_info = dict(grasp = grasp, gripper_act=gripper_act,
+                                        save_demo=save_demo, delete_demo=delete_demo, reset=reset
+                )
 
                 if controller_state["IsTracked"] == 1: # Can only control pose if the controller is tracked
                     # Trigger
@@ -228,14 +233,9 @@ class Quest(Device):
                         self.trigger_pressed = True
                     else:
                         self.trigger_pressed = False
-                        self.pos_delta = [0, 0, 0]
+                        self.pos_delta = [0, 0, 0] # TODO (NR): unused, maybe delete or add code for delta control
 
-
-                    if save_demo and delete_demo:
-                        # If both save and delete buttons are pressed, choose to save
-                        delete_demo = False
-
-                    # Joystick press, used for resetting controller transform
+                    # Joystick press, used for resetting controller transform, only works when controller is tracked
                     if (controller_state["AxisClicked"] and controller_state[
                         "AxisClicked"] != self.controller_offset_reset):
                         print("Set controller offset orientation")
@@ -285,38 +285,26 @@ class Quest(Device):
                         target_pose = target_pos.tolist() + target_ori
                         dpos = controller_curr_pos - self.controller_init_pos
 
-                        if self.grip_pressed:
-                            gripper_act = [1]
-                        else:
-                            gripper_act = [-1]
-
-                        self.engaged = True
-                        controller_state = dict(target_pose=target_pose, target_pos=target_pos,
+                        # Update the teleop info with the new target pose
+                        teleop_pose_info = dict(target_pose=target_pose, target_pos=target_pos,
                                                 target_ori=target_ori, dpos=dpos,
-                                                # TODO (NR): we have gripper act here in case we want to
-                                                #  do more fine-grained gripper control
-                                                grasp=gripper_act[0], gripper_act=gripper_act,
-                                                engaged=self.engaged, save_demo=save_demo, delete_demo=delete_demo,
-                                                # TODO (NR): fix this reset hack
-                                                reset=save_demo)
-                        self.prev_controller_state = controller_state
-                        return controller_state
-                    else:
-                        # TODO: maybe use self._nested_dict_update
-                        self.engaged = False
-                        self.prev_controller_state['engaged'] = self.engaged
-                        self.prev_controller_state['save_demo'] = save_demo
-                        self.prev_controller_state['delete_demo'] = delete_demo
-                        self.prev_controller_state['reset'] = save_demo
-                        return self.prev_controller_state
+                                                engaged=self.engaged,
+                                                )
+                        teleop_info = self._nested_dict_update(teleop_info, teleop_pose_info)
+
+                ## Final steps
+
+                if self.trigger_pressed or self.grip_pressed: # are we controlling pose or gripper?
+                    self.engaged = True
                 else:
-                    # TODO: maybe use self._nested_dict_update
                     self.engaged = False
-                    self.prev_controller_state['engaged'] = self.engaged
-                    self.prev_controller_state['save_demo'] = save_demo
-                    self.prev_controller_state['delete_demo'] = delete_demo
-                    self.prev_controller_state['reset'] = save_demo
-                    return self.prev_controller_state
+
+                teleop_info['engaged'] = self.engaged
+
+                self.prev_teleop_info = self._nested_dict_update(self.prev_teleop_info, teleop_info)
+                print(self.prev_teleop_info)
+                return self.prev_teleop_info
+
 
     def _nested_dict_update(self, curr_dict, update_dict):
         for k, v in update_dict.items():
@@ -325,6 +313,25 @@ class Quest(Device):
             else:
                 curr_dict[k] = v
         return curr_dict
+
+    @staticmethod
+    def _display_controls():
+        """
+        Method to pretty print controls.
+        """
+
+        def print_command(char, info):
+            char += " " * (30 - len(char))
+            print("{}\t{}".format(char, info))
+
+        print("")
+        print_command("Control", "Command")
+        print_command("Front Grip", "control pose")
+        print_command("Side Grip", "control gripper")
+        print_command("A", "save demo")
+        print_command("B", "delete demo")
+        print_command("Press Joystick (Click)", "set controller transform")
+        print("")
 
 if __name__ == "__main__":
     quest_controller = Quest(debug=True)
