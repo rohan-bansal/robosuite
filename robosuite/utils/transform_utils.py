@@ -47,6 +47,15 @@ _AXES2TUPLE = {
 _TUPLE2AXES = dict((v, k) for k, v in _AXES2TUPLE.items())
 
 
+def isclose(a, b, rel_tol=1e-09, abs_tol=0.0):
+    """
+    Reimplement math.isclose()
+    """
+    if hasattr(math, "isclose"):
+        return math.isclose(a, b, rel_tol=rel_tol, abs_tol=abs_tol)
+    return abs(a - b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
+
+
 def convert_quat(q, to="xyzw"):
     """
     Converts quaternion from one convention to another.
@@ -516,6 +525,25 @@ def quat2axisangle(quat):
         return np.zeros(3)
 
     return (quat[:3] * 2.0 * math.acos(quat[3])) / den
+
+
+def axisangle2vec(axis, angle):
+    """
+    Converts axis-angle to Euler vector (exponential coordinates).
+    """
+    return axis * angle
+
+
+def vec2axisangle(vec):
+    """
+    Converts Euler vector (exponential coordinates) to axis-angle.
+    """
+    angle = np.linalg.norm(vec)
+    if isclose(angle, 0.):
+        # treat as a zero rotation
+        return np.array([1., 0., 0.]), 0.
+    axis = vec / angle
+    return axis, angle
 
 
 def axisangle2quat(vec):

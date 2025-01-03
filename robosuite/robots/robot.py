@@ -336,6 +336,7 @@ class Robot(object):
         self.sim.data.qpos[self._ref_joint_pos_indexes] = jpos
         self.sim.forward()
 
+
     @property
     def js_energy(self):
         """

@@ -458,3 +458,21 @@ class SingleArm(Manipulator):
             np.array: (ax,ay,az) angular velocity of eef in base frame of robot.
         """
         return self._hand_total_velocity[3:]
+
+
+    @property
+    def last_eef_pose(self,):
+        """
+        TODO:
+        Returns:
+
+        """
+
+        ee_pos = np.array(self.sim.data.site_xpos[self.sim.model.site_name2id(self.controller.eef_name)])
+        ee_ori_mat = np.array(
+            self.sim.data.site_xmat[self.sim.model.site_name2id(self.controller.eef_name)].reshape([3, 3])
+        )
+        pos_ori_mat = np.eye(4)
+        pos_ori_mat[:3, :3] = ee_ori_mat
+        pos_ori_mat[:3, -1] = ee_pos
+        return pos_ori_mat

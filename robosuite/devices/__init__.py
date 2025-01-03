@@ -1,5 +1,6 @@
 from .device import Device
 from .keyboard import Keyboard
+from .quest import Quest
 
 try:
     from .spacemouse import SpaceMouse
