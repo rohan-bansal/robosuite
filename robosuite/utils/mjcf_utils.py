@@ -880,3 +880,41 @@ def bounds_to_grid(bounds):
             final_grid_dims[dim_i][t] = grid_dims[dim_i][g_ind]
 
     return final_grid_dims
+
+
+def postprocess_model_xml(xml_str):
+    """
+    This function postprocesses the model.xml collected from a MuJoCo demonstration
+    in order to make sure that the STL files can be found.
+
+    Args:
+        xml_str (str): Mujoco sim demonstration XML file as string
+
+    Returns:
+        str: Post-processed xml file as string
+    """
+
+    path = os.path.split(robosuite.__file__)[0]
+    path_split = path.split("/")
+
+    # replace mesh and texture file paths
+    tree = ET.fromstring(xml_str)
+    root = tree
+    asset = root.find("asset")
+    meshes = asset.findall("mesh")
+    textures = asset.findall("texture")
+    all_elements = meshes + textures
+
+    for elem in all_elements:
+        old_path = elem.get("file")
+        if old_path is None:
+            continue
+        old_path_split = old_path.split("/")
+        ind = max(
+            loc for loc, val in enumerate(old_path_split) if val == "robosuite"
+        )  # last occurrence index
+        new_path_split = path_split + old_path_split[ind + 1 :]
+        new_path = "/".join(new_path_split)
+        elem.set("file", new_path)
+
+    return ET.tostring(root, encoding="utf8").decode("utf8")

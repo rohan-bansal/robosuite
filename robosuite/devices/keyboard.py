@@ -95,6 +95,9 @@ class Keyboard(Device):
             raw_drotation=raw_drotation,
             grasp=int(self.grasp),
             reset=self._reset_state,
+            # TODO: (NR) set save_demo and delete_demo correctly if needed
+            save_demo = self._reset_state,
+            delete_demo = False
         )
 
     def on_press(self, key):
