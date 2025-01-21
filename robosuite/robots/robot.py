@@ -174,7 +174,38 @@ class Robot(object):
         Sets up observables to be used for this robot
 
         Returns:
-            OrderedDict: Dictionary mapping observable names to its corresponding Observable object
+            OrderedDict: Dictio        # Set relevant attributes
+        self.sim = None  # MjSim this robot is tied to
+        self.name = robot_type  # Specific robot to instantiate
+        self.idn = idn  # Unique ID of this robot
+        self.robot_model = None  # object holding robot model-specific info
+        self.control_freq = control_freq  # controller Hz
+        self.mount_type = mount_type  # Type of mount to use
+
+        # Scaling of Gaussian initial noise applied to robot joints
+        self.initialization_noise = initialization_noise
+        if self.initialization_noise is None:
+            self.initialization_noise = {"magnitude": 0.0, "type": "gaussian"}  # no noise conditions
+        elif self.initialization_noise == "default":
+            self.initialization_noise = {"magnitude": 0.02, "type": "gaussian"}
+        self.initialization_noise["magnitude"] = (
+            self.initialization_noise["magnitude"] if self.initialization_noise["magnitude"] else 0.0
+        )
+
+        self.init_qpos = initial_qpos  # n-dim list / array of robot joints
+
+        self.robot_joints = None  # xml joint names for robot
+        self.base_pos = None  # Base position in world coordinates (x,y,z)
+        self.base_ori = None  # Base rotation in world coordinates (x,y,z,w quat)
+        self._ref_joint_indexes = None  # xml joint indexes for robot in mjsim
+        self._ref_joint_pos_indexes = None  # xml joint position indexes in mjsim
+        self._ref_joint_vel_indexes = None  # xml joint velocity indexes in mjsim
+        self._ref_joint_actuator_indexes = None  # xml joint (torq) actuator indexes for robot in mjsim
+
+        self.recent_qpos = None  # Current and last robot arm qpos
+        self.recent_actions = None  # Current and last action applied
+        self.recent_torques = None  # Current and last torques applied
+nary mapping observable names to its corresponding Observable object
         """
         # Get prefix from robot model to avoid naming clashes for multiple robots and define observables modality
         pf = self.robot_model.naming_prefix
@@ -193,6 +224,37 @@ class Robot(object):
         @sensor(modality=modality)
         def joint_pos_sin(obs_cache):
             return np.sin(obs_cache[pre_compute]) if pre_compute in obs_cache else np.zeros(self.robot_model.dof)
+        # Set relevant attributes
+        self.sim = None  # MjSim this robot is tied to
+        self.name = robot_type  # Specific robot to instantiate
+        self.idn = idn  # Unique ID of this robot
+        self.robot_model = None  # object holding robot model-specific info
+        self.control_freq = control_freq  # controller Hz
+        self.mount_type = mount_type  # Type of mount to use
+
+        # Scaling of Gaussian initial noise applied to robot joints
+        self.initialization_noise = initialization_noise
+        if self.initialization_noise is None:
+            self.initialization_noise = {"magnitude": 0.0, "type": "gaussian"}  # no noise conditions
+        elif self.initialization_noise == "default":
+            self.initialization_noise = {"magnitude": 0.02, "type": "gaussian"}
+        self.initialization_noise["magnitude"] = (
+            self.initialization_noise["magnitude"] if self.initialization_noise["magnitude"] else 0.0
+        )
+
+        self.init_qpos = initial_qpos  # n-dim list / array of robot joints
+
+        self.robot_joints = None  # xml joint names for robot
+        self.base_pos = None  # Base position in world coordinates (x,y,z)
+        self.base_ori = None  # Base rotation in world coordinates (x,y,z,w quat)
+        self._ref_joint_indexes = None  # xml joint indexes for robot in mjsim
+        self._ref_joint_pos_indexes = None  # xml joint position indexes in mjsim
+        self._ref_joint_vel_indexes = None  # xml joint velocity indexes in mjsim
+        self._ref_joint_actuator_indexes = None  # xml joint (torq) actuator indexes for robot in mjsim
+
+        self.recent_qpos = None  # Current and last robot arm qpos
+        self.recent_actions = None  # Current and last action applied
+        self.recent_torques = None  # Current and last torques applied
 
         @sensor(modality=modality)
         def joint_vel(obs_cache):

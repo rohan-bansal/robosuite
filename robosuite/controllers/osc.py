@@ -143,6 +143,7 @@ class OperationalSpaceController(Controller):
         # Determine whether we want to use delta or absolute values as inputs
         self.use_delta = control_delta
 
+
         # Control dimension
         self.control_dim = 6 if self.use_ori else 3
         self.name_suffix = "POSE" if self.use_ori else "POSITION"

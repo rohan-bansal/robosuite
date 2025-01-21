@@ -2,6 +2,7 @@ import copy
 import os
 from collections import OrderedDict
 
+import numpy
 import numpy as np
 
 import robosuite.utils.transform_utils as T
@@ -252,6 +253,11 @@ class SingleArm(Manipulator):
         # Clip the torques
         low, high = self.torque_limits
         self.torques = np.clip(torques, low, high)
+
+        # TODO delete
+        # if not numpy.allclose(torques, self.torques):
+        #
+        #     print("single_arm.py line 258: Torques are being clipped")
 
         # Get gripper action, if applicable
         if self.has_gripper:
