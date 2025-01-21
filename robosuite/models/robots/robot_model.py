@@ -67,9 +67,10 @@ class RobotModel(MujocoXMLModel, metaclass=RobotModelMeta):
         parent = self.root.find("actuator")
         for child in parent:
             if "torq" in child.attrib["name"]:
-                ctrl_range = string_to_array(child.attrib["ctrlrange"])
-                ctrl_range = array_to_string([x * torque_scale for x in ctrl_range])
+                old_ctrl_range = string_to_array(child.attrib["ctrlrange"])
+                ctrl_range = array_to_string([x * torque_scale for x in old_ctrl_range])
                 child.set("ctrlrange", ctrl_range)
+                print("Torque", child.attrib["name"], "scaled: ", old_ctrl_range, " -> ", string_to_array(ctrl_range))
 
         print("Set torque scale to: ", torque_scale, " for robot: ", self.__class__.__name__)
 
