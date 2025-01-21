@@ -183,6 +183,7 @@ class NutAssembly(SingleArmEnv):
         camera_segmentations=None,  # {None, instance, class, element}
         renderer="mujoco",
         renderer_config=None,
+        torque_scale=1.0
     ):
         # task settings
         self.single_object_mode = single_object_mode
@@ -235,6 +236,7 @@ class NutAssembly(SingleArmEnv):
             camera_segmentations=camera_segmentations,
             renderer=renderer,
             renderer_config=renderer_config,
+            torque_scale=torque_scale
         )
 
     def reward(self, action=None):

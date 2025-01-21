@@ -51,6 +51,7 @@ class Robot(object):
         initialization_noise=None,
         mount_type="default",
         control_freq=20,
+        torque_scale=1.0
     ):
         # Set relevant attributes
         self.sim = None  # MjSim this robot is tied to
@@ -59,6 +60,8 @@ class Robot(object):
         self.robot_model = None  # object holding robot model-specific info
         self.control_freq = control_freq  # controller Hz
         self.mount_type = mount_type  # Type of mount to use
+
+        self.torque_scale = torque_scale  # Scaling factor for torques
 
         # Scaling of Gaussian initial noise applied to robot joints
         self.initialization_noise = initialization_noise
@@ -94,7 +97,7 @@ class Robot(object):
         """
         Loads robot and optionally add grippers.
         """
-        self.robot_model = create_robot(self.name, idn=self.idn)
+        self.robot_model = create_robot(self.name, idn=self.idn, torque_scale=self.torque_scale)
 
         # Add mount if specified
         if self.mount_type == "default":

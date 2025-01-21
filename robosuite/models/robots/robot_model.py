@@ -4,6 +4,8 @@ from robosuite.models.base import MujocoXMLModel
 from robosuite.utils.mjcf_utils import ROBOT_COLLISION_COLOR, array_to_string, string_to_array
 from robosuite.utils.transform_utils import euler2mat, mat2quat
 
+import xml.etree.ElementTree as ET
+
 REGISTERED_ROBOTS = {}
 
 
@@ -58,8 +60,19 @@ class RobotModel(MujocoXMLModel, metaclass=RobotModelMeta):
         idn (int or str): Number or some other unique identification string for this robot instance
     """
 
-    def __init__(self, fname, idn=0):
+    def __init__(self, fname, idn=0, torque_scale=1.0):
         super().__init__(fname, idn=idn)
+
+        # TORQUE CALCULATION
+        parent = self.root.find("actuator")
+        for child in parent:
+            if "torq" in child.attrib["name"]:
+                old_ctrl_range = string_to_array(child.attrib["ctrlrange"])
+                ctrl_range = array_to_string([x * torque_scale for x in old_ctrl_range])
+                child.set("ctrlrange", ctrl_range)
+                print("Torque", child.attrib["name"], "scaled: ", old_ctrl_range, " -> ", string_to_array(ctrl_range))
+
+        print("Set torque scale to: ", torque_scale, " for robot: ", self.__class__.__name__)
 
         # Define other variables that get filled later
         self.mount = None

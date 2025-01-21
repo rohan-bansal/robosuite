@@ -159,6 +159,7 @@ class Door(SingleArmEnv):
         camera_segmentations=None,  # {None, instance, class, element}
         renderer="mujoco",
         renderer_config=None,
+        torque_scale=1.0
     ):
         # settings for table top (hardcoded since it's not an essential part of the environment)
         self.table_full_size = (0.8, 0.3, 0.05)
@@ -200,6 +201,7 @@ class Door(SingleArmEnv):
             camera_segmentations=camera_segmentations,
             renderer=renderer,
             renderer_config=renderer_config,
+            torque_scale=torque_scale
         )
 
     def reward(self, action=None):
