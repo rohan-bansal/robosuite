@@ -94,6 +94,8 @@ class SingleArm(Manipulator):
             control_freq=control_freq,
         )
 
+
+
     def _load_controller(self):
         """
         Loads controller to be used for dynamic trajectories
