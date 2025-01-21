@@ -15,9 +15,9 @@ class ManipulatorModel(RobotModel):
         idn (int or str): Number or some other unique identification string for this robot instance
     """
 
-    def __init__(self, fname, idn=0):
+    def __init__(self, fname, idn=0, torque_scale=1.0):
         # Always run super init first
-        super().__init__(fname, idn=idn)
+        super().__init__(fname, idn=idn, torque_scale=torque_scale)
 
         # key: gripper name and value: gripper model
         self.grippers = OrderedDict()

@@ -62,7 +62,10 @@ class SingleArm(Manipulator):
         mount_type="default",
         gripper_type="default",
         control_freq=20,
+        torque_scale=1.0
     ):
+
+        self.torque_scale = torque_scale
 
         self.controller = None
         self.controller_config = copy.deepcopy(controller_config)
@@ -92,6 +95,7 @@ class SingleArm(Manipulator):
             initialization_noise=initialization_noise,
             mount_type=mount_type,
             control_freq=control_freq,
+            torque_scale=torque_scale
         )
 
     def _load_controller(self):

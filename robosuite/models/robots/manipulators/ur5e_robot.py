@@ -12,8 +12,8 @@ class UR5e(ManipulatorModel):
         idn (int or str): Number or some other unique identification string for this robot instance
     """
 
-    def __init__(self, idn=0):
-        super().__init__(xml_path_completion("robots/ur5e/robot.xml"), idn=idn)
+    def __init__(self, idn=0, torque_scale=1.0):
+        super().__init__(xml_path_completion("robots/ur5e/robot.xml"), idn=idn, torque_scale=torque_scale)
 
     @property
     def default_mount(self):

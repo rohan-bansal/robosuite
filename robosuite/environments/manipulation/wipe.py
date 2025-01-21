@@ -189,6 +189,7 @@ class Wipe(SingleArmEnv):
         task_config=None,
         renderer="mujoco",
         renderer_config=None,
+        torque_scale=1.0
     ):
         # Assert that the gripper type is None
         assert (
@@ -289,6 +290,7 @@ class Wipe(SingleArmEnv):
             camera_segmentations=camera_segmentations,
             renderer=renderer,
             renderer_config=renderer_config,
+            torque_scale=torque_scale
         )
 
     def reward(self, action=None):

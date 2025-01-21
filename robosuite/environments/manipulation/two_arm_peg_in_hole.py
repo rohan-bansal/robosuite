@@ -168,6 +168,7 @@ class TwoArmPegInHole(TwoArmEnv):
         camera_segmentations=None,  # {None, instance, class, element}
         renderer="mujoco",
         renderer_config=None,
+        torque_scale=1.0
     ):
         # Assert that the gripper type is None
         assert gripper_types is None, "Tried to specify gripper other than None in TwoArmPegInHole environment!"
@@ -208,6 +209,7 @@ class TwoArmPegInHole(TwoArmEnv):
             camera_segmentations=camera_segmentations,
             renderer=renderer,
             renderer_config=renderer_config,
+            torque_scale=torque_scale
         )
 
     def reward(self, action=None):

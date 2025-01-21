@@ -68,6 +68,7 @@ class Bimanual(Manipulator):
         mount_type="default",
         gripper_type="default",
         control_freq=20,
+        torque_scale=1.0
     ):
 
         self.controller = self._input2dict(None)

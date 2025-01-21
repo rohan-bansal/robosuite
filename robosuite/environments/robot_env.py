@@ -142,6 +142,7 @@ class RobotEnv(MujocoEnv):
         robot_configs=None,
         renderer="mujoco",
         renderer_config=None,
+        torque_scale=1.0
     ):
         # First, verify that correct number of robots are being inputted
         self.env_configuration = env_configuration
@@ -204,6 +205,7 @@ class RobotEnv(MujocoEnv):
                     "mount_type": mount_types[idx],
                     "initialization_noise": initialization_noise[idx],
                     "control_freq": control_freq,
+                    "torque_scale": torque_scale
                 },
                 **robot_config,
             )
