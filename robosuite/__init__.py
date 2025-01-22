@@ -3,6 +3,7 @@ from robosuite.environments.base import make
 # Manipulation environments
 from robosuite.environments.manipulation.lift import Lift
 from robosuite.environments.manipulation.stack import Stack
+
 from robosuite.environments.manipulation.nut_assembly import NutAssembly
 from robosuite.environments.manipulation.pick_place import PickPlace
 from robosuite.environments.manipulation.door import Door
@@ -12,6 +13,20 @@ from robosuite.environments.manipulation.two_arm_lift import TwoArmLift
 from robosuite.environments.manipulation.two_arm_peg_in_hole import TwoArmPegInHole
 from robosuite.environments.manipulation.two_arm_handover import TwoArmHandover
 from robosuite.environments.manipulation.two_arm_transport import TwoArmTransport
+
+
+# import tasks to make sure they are added to robosuite task registry
+try:
+    from mimicgen.envs.robosuite.threading import *
+    from mimicgen.envs.robosuite.coffee import *
+    from mimicgen.envs.robosuite.three_piece_assembly import *
+    from mimicgen.envs.robosuite.mug_cleanup import *
+    from mimicgen.envs.robosuite.stack import *
+    from mimicgen.envs.robosuite.nut_assembly import *
+    from mimicgen.envs.robosuite.pick_place import *
+except ImportError as e:
+    print("WARNING: mimicgen environments not imported...")
+    print("Got error: {}".format(e))
 
 from robosuite.environments import ALL_ENVIRONMENTS
 from robosuite.controllers import ALL_CONTROLLERS, load_controller_config
