@@ -24,6 +24,7 @@ try:
     from mimicgen.envs.robosuite.stack import *
     from mimicgen.envs.robosuite.nut_assembly import *
     from mimicgen.envs.robosuite.pick_place import *
+    # from mimicgen.envs.robosuite.stack_target import *
 except ImportError as e:
     print("WARNING: mimicgen environments not imported...")
     print("Got error: {}".format(e))
