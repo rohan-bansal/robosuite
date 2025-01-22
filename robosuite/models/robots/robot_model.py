@@ -70,9 +70,9 @@ class RobotModel(MujocoXMLModel, metaclass=RobotModelMeta):
                 old_ctrl_range = string_to_array(child.attrib["ctrlrange"])
                 ctrl_range = array_to_string([x * torque_scale for x in old_ctrl_range])
                 child.set("ctrlrange", ctrl_range)
-                print("Torque", child.attrib["name"], "scaled: ", old_ctrl_range, " -> ", string_to_array(ctrl_range))
-
-        print("Set torque scale to: ", torque_scale, " for robot: ", self.__class__.__name__)
+        #         print("Torque", child.attrib["name"], "scaled: ", old_ctrl_range, " -> ", string_to_array(ctrl_range))
+        #
+        # print("Set torque scale to: ", torque_scale, " for robot: ", self.__class__.__name__)
 
         # Define other variables that get filled later
         self.mount = None
