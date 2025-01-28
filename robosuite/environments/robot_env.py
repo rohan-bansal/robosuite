@@ -142,7 +142,8 @@ class RobotEnv(MujocoEnv):
         robot_configs=None,
         renderer="mujoco",
         renderer_config=None,
-        torque_scale=1.0
+        torque_scale=1.0,
+        observable_sampling_rate=1000,
     ):
         # First, verify that correct number of robots are being inputted
         self.env_configuration = env_configuration
@@ -194,6 +195,8 @@ class RobotEnv(MujocoEnv):
             raise ValueError("Error: Camera observations require an offscreen renderer!")
         if self.use_camera_obs and self.camera_names is None:
             raise ValueError("Must specify at least one camera name when using camera obs")
+
+        self.observable_sampling_rate = observable_sampling_rate
 
         # Robot configurations -- update from subclass configs
         if robot_configs is None:
@@ -363,7 +366,7 @@ class RobotEnv(MujocoEnv):
                 observables[name] = Observable(
                     name=name,
                     sensor=s,
-                    sampling_rate=self.control_freq,
+                    sampling_rate=self.observable_sampling_rate,
                 )
 
         return observables

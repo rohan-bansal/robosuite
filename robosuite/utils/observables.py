@@ -186,7 +186,7 @@ class Observable:
         corrupter=None,
         filter=None,
         delayer=None,
-        sampling_rate=20,
+        sampling_rate=1000,
         enabled=True,
         active=True,
     ):
@@ -196,6 +196,12 @@ class Observable:
         self._corrupter = corrupter if corrupter is not None else NO_CORRUPTION
         self._filter = filter if filter is not None else NO_FILTER
         self._delayer = delayer if delayer is not None else NO_DELAY
+
+        # TODO: remove this
+        self._delayer = NO_DELAY
+
+        # TODO: pass this in from constructor, remove this here
+        sampling_rate = 1000
         self._sampling_timestep = 1.0 / sampling_rate
         self._enabled = enabled
         self._active = active
@@ -244,10 +250,11 @@ class Observable:
             if self._time_since_last_sample >= self._sampling_timestep:
                 if not self._sampled:
                     # If we still haven't sampled yet, sample immediately and warn user that sampling rate is too low
-                    print(
-                        f"Warning: sampling rate for observable {self.name} is either too low or delay is too high. "
-                        f"Please adjust one (or both)"
-                    )
+                    # TODO: enable warning later
+                    # print(
+                    #     f"Warning: sampling rate for observable {self.name} is either too low or delay is too high. "
+                    #     f"Please adjust one (or both)"
+                    # )
                     # Get newest raw value, corrupt it, filter it, and set it as our current observed value
                     obs = np.array(self._filter(self._corrupter(self._sensor(obs_cache))))
                     self._current_observed_value = obs[0] if len(obs.shape) == 1 and obs.shape[0] == 1 else obs

@@ -51,7 +51,8 @@ class Robot(object):
         initialization_noise=None,
         mount_type="default",
         control_freq=20,
-        torque_scale=1.0
+        torque_scale=1.0,
+        observable_sampling_rate = 1000,
     ):
         # Set relevant attributes
         self.sim = None  # MjSim this robot is tied to
@@ -62,6 +63,7 @@ class Robot(object):
         self.mount_type = mount_type  # Type of mount to use
 
         self.torque_scale = torque_scale  # Scaling factor for torques
+        self.observable_sampling_rate = observable_sampling_rate
 
         # Scaling of Gaussian initial noise applied to robot joints
         self.initialization_noise = initialization_noise
@@ -215,7 +217,7 @@ class Robot(object):
             observables[obs_name] = Observable(
                 name=obs_name,
                 sensor=s,
-                sampling_rate=self.control_freq,
+                sampling_rate=self.observable_sampling_rate,
                 active=active,
             )
 
