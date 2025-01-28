@@ -177,6 +177,8 @@ class PickPlace(SingleArmEnv):
         bin2_pos=(0.1, 0.28, 0.8),
         z_offset=0.,
         z_rotation=None,
+        object_to_id=None,
+        obj_names=None,
         use_camera_obs=True,
         use_object_obs=True,
         reward_scale=1.0,
@@ -204,9 +206,15 @@ class PickPlace(SingleArmEnv):
     ):
         # task settings
         self.single_object_mode = single_object_mode
-        self.object_to_id = {"milk": 0, "bread": 1, "cereal": 2, "can": 3}
+        if object_to_id is None:
+            self.object_to_id = {"milk": 0, "bread": 1, "cereal": 2, "can": 3}
+        else:
+            self.object_to_id = object_to_id
         self.object_id_to_sensors = {}  # Maps object id to sensor names for that object
-        self.obj_names = ["Milk", "Bread", "Cereal", "Can"]
+        if obj_names is None:
+            self.obj_names = ["Milk", "Bread", "Cereal", "Can"]
+        else:
+            self.obj_names = obj_names
         if object_type is not None:
             assert object_type in self.object_to_id.keys(), "invalid @object_type argument - choose one of {}".format(
                 list(self.object_to_id.keys())

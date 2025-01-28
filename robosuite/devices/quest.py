@@ -302,7 +302,7 @@ class Quest(Device):
                 teleop_info['engaged'] = self.engaged
 
                 self.prev_teleop_info = self._nested_dict_update(self.prev_teleop_info, teleop_info)
-                print(self.prev_teleop_info)
+                # print(self.prev_teleop_info)
                 return self.prev_teleop_info
 
 
