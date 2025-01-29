@@ -59,7 +59,8 @@ class PandaGripper(PandaGripperBase):
 
     @property
     def speed(self):
-        return 0.01
+        # TODO change this back to 0.01
+        return 0.5
 
     @property
     def dof(self):
