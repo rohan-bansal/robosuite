@@ -286,6 +286,9 @@ class MjModel(metaclass=_MjModelMeta):
         # free mujoco model
         del self._model
 
+    def get_mj_model(self):
+        return self._model
+
     """
     Some methods supported by sim.model in mujoco-py.
     Copied from https://github.com/openai/mujoco-py/blob/ab86d331c9a77ae412079c6e58b8771fe63747fc/mujoco_py/generated/wrappers.pxi#L2611

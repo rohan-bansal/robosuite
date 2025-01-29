@@ -12,7 +12,7 @@ IMPEDANCE_MODES = {"fixed", "variable", "variable_kp"}
 # TODO: Maybe better naming scheme to differentiate between input / output min / max and pos/ori limits, etc.
 
 
-class OperationalSpaceController(Controller):
+class OperationalSpaceControllerFeedForward(Controller):
     """
     Controller for controlling robot arm via operational space control. Allows position and / or orientation control
     of the robot's end effector. For detailed information as to the mathematical foundation for this controller, please
@@ -145,7 +145,7 @@ class OperationalSpaceController(Controller):
 
 
         # Control dimension
-        self.control_dim = 6 if self.use_ori else 3
+        self.control_dim = 12 if self.use_ori else 6
         self.name_suffix = "POSE" if self.use_ori else "POSITION"
 
         # input and output max and min (allow for either explicit lists or single numbers)
@@ -197,11 +197,14 @@ class OperationalSpaceController(Controller):
         self.goal_ori = np.array(self.initial_ee_ori_mat)
         self.goal_pos = np.array(self.initial_ee_pos)
 
+        # setting goal velocities
+        self.goal_pos_vel = np.zeros(3)
+        self.goal_ang_vel = np.zeros(3)
 
         self.relative_ori = np.zeros(3)
         self.ori_ref = None
 
-    def set_goal(self, action, set_pos=None, set_ori=None):
+    def set_goal(self, action, set_pos=None, set_ori=None, set_goal_pos_vel=None, set_goal_ang_vel=None):
         """
         Sets goal based on input @action. If self.impedance_mode is not "fixed", then the input will be parsed into the
         delta values to update the goal position / pose and the kp and/or damping_ratio values to be immediately updated
@@ -221,45 +224,23 @@ class OperationalSpaceController(Controller):
         # Update state
         self.update()
 
-        # Parse action based on the impedance mode, and update kp / kd as necessary
-        if self.impedance_mode == "variable":
-            damping_ratio, kp, delta = action[:6], action[6:12], action[12:]
-            self.kp = np.clip(kp, self.kp_min, self.kp_max)
-            self.kd = 2 * np.sqrt(self.kp) * np.clip(damping_ratio, self.damping_ratio_min, self.damping_ratio_max)
-        elif self.impedance_mode == "variable_kp":
-            kp, delta = action[:6], action[6:]
-            self.kp = np.clip(kp, self.kp_min, self.kp_max)
-            self.kd = 2 * np.sqrt(self.kp)  # critically damped
-        else:  # This is case "fixed"
-            delta = action
 
-        # If we're using deltas, interpret actions as such
-        if self.use_delta:
-            if delta is not None:
-                scaled_delta = self.scale_action(delta)
-                if not self.use_ori and set_ori is None:
-                    # Set default control for ori since user isn't actively controlling ori
-                    set_ori = np.array([[0.0, 1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, -1.0]])
-            else:
-                scaled_delta = []
-        # Else, interpret actions as absolute values
-        else:
-            if set_pos is None:
-                set_pos = delta[:3]
-            # Set default control for ori if we're only using position control
-            if set_ori is None:
-                set_ori = (
-                    T.quat2mat(T.axisangle2quat(delta[3:6]))
-                    if self.use_ori
-                    else np.array([[0.0, 1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, -1.0]])
-                )
-            # No scaling of values since these are absolute values
-            scaled_delta = delta
+        if set_pos is None:
+            set_pos = action[:3]
+        # Set default control for ori if we're only using position control
+        if set_ori is None:
+            set_ori = (
+                T.quat2mat(T.axisangle2quat(action[3:6]))
+                if self.use_ori
+                else np.array([[0.0, 1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, -1.0]])
+            )
+        # No scaling of values since these are absolute values
+        scaled_delta = action
 
         # We only want to update goal orientation if there is a valid delta ori value OR if we're using absolute ori
         # use math.isclose instead of numpy because numpy is slow
         bools = [0.0 if math.isclose(elem, 0.0) else 1.0 for elem in scaled_delta[3:]]
-        if sum(bools) > 0.0 or set_ori is not None:
+        if set_ori is not None:
             self.goal_ori = set_goal_orientation(
                 scaled_delta[3:], self.ee_ori_mat, orientation_limit=self.orientation_limits, set_ori=set_ori
             )
@@ -276,6 +257,9 @@ class OperationalSpaceController(Controller):
                 orientation_error(self.goal_ori, self.ori_ref)
             )  # goal is the total orientation error
             self.relative_ori = np.zeros(3)  # relative orientation always starts at 0
+
+        self.goal_pos_vel = set_goal_pos_vel
+        self.goal_ang_vel = set_goal_ang_vel
 
     def run_controller(self):
         """
@@ -322,9 +306,10 @@ class OperationalSpaceController(Controller):
             vel_pos_error, self.kd[0:3]
         )
 
-        # Current vel_ori_error is the robot's current end effector velocity
+        # TODO Current vel_ori_error is the robot's current end effector velocity
         # Change to desired - current and do not negate it
-        vel_ori_error = -self.ee_ori_vel
+
+        vel_ori_error = self.goal_ang_vel - self.ee_ori_vel
 
 
         # Feedforward control

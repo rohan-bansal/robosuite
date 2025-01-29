@@ -89,6 +89,8 @@ class SingleArm(Manipulator):
         self.recent_ee_vel_buffer = None  # RingBuffer holding prior 10 values of velocity values
         self.recent_ee_acc = None  # Current and last eef acceleration
 
+
+
         super().__init__(
             robot_type=robot_type,
             idn=idn,
@@ -137,6 +139,7 @@ class SingleArm(Manipulator):
         self.controller_config["actuator_range"] = self.torque_limits
         self.controller_config["policy_freq"] = self.control_freq
         self.controller_config["ndim"] = len(self.robot_joints)
+        self.feedforward = self.controller_config.get("feedforward", False)
 
         # Instantiate the relevant controller
         self.controller = controller_factory(self.controller_config["type"], self.controller_config)
@@ -228,9 +231,7 @@ class SingleArm(Manipulator):
         passed joint velocities and gripper control.
 
         Args:
-            action (np.array): The control to apply to the robot. The first @self.robot_model.dof dimensions should be
-                the desired normalized joint velocities and if the robot has a gripper, the next @self.gripper.dof
-                dimensions should be actuation controls for the gripper.
+            action (np.array): The control to apply to the robot.
             policy_step (bool): Whether a new policy step (action) is being taken
 
         Raises:
@@ -264,6 +265,7 @@ class SingleArm(Manipulator):
         if not numpy.allclose(torques, self.torques):
 
             print("single_arm.py line 258: Torques are being clipped")
+            print(f"single_arm.py: {self.torque_limits}")
 
         # Get gripper action, if applicable
         if self.has_gripper:
