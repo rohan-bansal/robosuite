@@ -7,8 +7,8 @@
         <mesh name="finger_vis2" file="meshes/panda_gripper/finger_longer.stl" />
     </asset>
     <actuator>
-        <position ctrllimited="false" ctrlrange="0.0 0.04" joint="finger_joint1" kp="5000" name="gripper_finger_joint1" forcelimited="false" forcerange="-100 100"/>
-        <position ctrllimited="false" ctrlrange="-0.04 0.0" joint="finger_joint2" kp="5000" name="gripper_finger_joint2" forcelimited="false" forcerange="-100 100"/>
+        <position ctrllimited="false" ctrlrange="0.0 0.04" joint="finger_joint1" kp="5000" name="gripper_finger_joint1" forcelimited="false" forcerange="-40 40"/>
+        <position ctrllimited="false" ctrlrange="-0.04 0.0" joint="finger_joint2" kp="5000" name="gripper_finger_joint2" forcelimited="false" forcerange="-40 40"/>
     </actuator>
     <worldbody>
         <body name="right_gripper" pos="0 0 0" quat="0.707107 0 0 -0.707107">
