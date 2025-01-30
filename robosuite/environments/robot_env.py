@@ -196,6 +196,7 @@ class RobotEnv(MujocoEnv):
         if self.use_camera_obs and self.camera_names is None:
             raise ValueError("Must specify at least one camera name when using camera obs")
 
+        # TODO remove observable sampling rate maybe
         self.observable_sampling_rate = observable_sampling_rate
 
         # Robot configurations -- update from subclass configs
@@ -366,6 +367,7 @@ class RobotEnv(MujocoEnv):
                 observables[name] = Observable(
                     name=name,
                     sensor=s,
+                    # TODO maybe remove observable sampling rate
                     sampling_rate=self.observable_sampling_rate,
                 )
 

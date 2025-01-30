@@ -402,12 +402,15 @@ class MujocoEnv(metaclass=EnvMeta):
             self.sim.forward()
             self._pre_action(action, policy_step)
             self.sim.step()
+            # TODO changing observable update to on-demand, change this back if it breaks the simulation
             self._update_observables()
             policy_step = False
 
             self.sim_steps += 1
             self.sim_elapsed_time += self.model_timestep
 
+        # TODO changing observable update to on-demand, change this back if it breaks the simulation
+        # self._update_observables(force=True)
         # Note: this is done all at once to avoid floating point inaccuracies
         self.cur_time += self.control_timestep
 
