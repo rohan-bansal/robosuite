@@ -186,7 +186,7 @@ class Observable:
         corrupter=None,
         filter=None,
         delayer=None,
-        sampling_rate=1000,
+        sampling_rate=20,
         enabled=True,
         active=True,
     ):
@@ -201,7 +201,7 @@ class Observable:
         self._delayer = NO_DELAY
 
         # TODO: pass this in from constructor, remove this here
-        sampling_rate = 1000
+        # sampling_rate = 1000
         self._sampling_timestep = 1.0 / sampling_rate
         self._enabled = enabled
         self._active = active

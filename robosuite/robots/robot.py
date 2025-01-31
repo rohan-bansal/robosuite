@@ -52,7 +52,7 @@ class Robot(object):
         mount_type="default",
         control_freq=20,
         torque_scale=1.0,
-        observable_sampling_rate = 1000,
+        observable_sampling_rate = 20,
     ):
         # Set relevant attributes
         self.sim = None  # MjSim this robot is tied to
@@ -217,7 +217,7 @@ class Robot(object):
             observables[obs_name] = Observable(
                 name=obs_name,
                 sensor=s,
-                sampling_rate=self.observable_sampling_rate,
+                sampling_rate=self.control_freq,
                 active=active,
             )
 
