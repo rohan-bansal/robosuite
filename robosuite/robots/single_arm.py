@@ -262,10 +262,10 @@ class SingleArm(Manipulator):
         self.torques = np.clip(torques, low, high)
 
         # TODO delete
-        if not numpy.allclose(torques, self.torques):
-
-            print("single_arm.py line 258: Torques are being clipped")
-            print(f"single_arm.py: {self.torque_limits}")
+        # if not numpy.allclose(torques, self.torques):
+        #
+        #     print("single_arm.py line 258: Torques are being clipped")
+        #     print(f"single_arm.py: {self.torque_limits}")
 
         # Get gripper action, if applicable
         if self.has_gripper:
