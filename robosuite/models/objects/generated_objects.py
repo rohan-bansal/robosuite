@@ -66,11 +66,18 @@ class CompositeBodyObject(MujocoGeneratedObject):
         joints="default",
         body_joints=None,
         sites=None,
+        total_size=None,
+        locations_relative_to_corner=False,
     ):
         # Always call superclass first
         super().__init__()
 
         self._name = name
+        # backported from robosuite v1.5.0 (mimicgen composite objects: cup, coffee machine)
+        self.total_size = np.array(total_size) if total_size is not None else None
+        self.locations_relative_to_corner = locations_relative_to_corner
+        if locations_relative_to_corner:
+            assert self.total_size is not None
 
         # Set internal variable geometric properties which will be modified later
         self._object_absolute_positions = {"root": np.zeros(3)}  # maps body names to abs positions (rel to root)
@@ -167,6 +174,12 @@ class CompositeBodyObject(MujocoGeneratedObject):
         # Add prefix to all assets
         add_prefix(root=self.asset, prefix=self.naming_prefix, exclude=self.exclude_from_prefixing)
 
+    def get_bounding_box_half_size(self):
+        # backported from robosuite v1.5.0
+        if self.total_size is not None:
+            return np.array(self.total_size)
+        return super().get_bounding_box_half_size()
+
     def _append_object(self, root, obj, parent_name=None, pos=None, quat=None):
         """
         Helper function to add pre-generated object @obj to the body with name @parent_name
@@ -194,6 +207,14 @@ class CompositeBodyObject(MujocoGeneratedObject):
         # Get the object xml element tree, remove its top-level joints, and modify its top-level pos / quat
         child = obj.get_obj()
         self._remove_joints(child)
+        if self.locations_relative_to_corner:
+            # backported from robosuite v1.5.0: @pos is relative to the composite's lower corner, not its center
+            cartesian_size = obj.get_bounding_box_half_size()
+            pos = [
+                (-self.total_size[0] + cartesian_size[0]) + pos[0],
+                (-self.total_size[1] + cartesian_size[1]) + pos[1],
+                (-self.total_size[2] + cartesian_size[2]) + pos[2],
+            ]
         child.set("pos", array_to_string(pos))
         child.set("quat", array_to_string(quat))
         # Add this object and its assets to this composite object

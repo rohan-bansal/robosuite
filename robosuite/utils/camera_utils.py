@@ -212,6 +212,79 @@ def transform_from_pixels_to_world(pixels, depth_map, camera_to_world_transform)
     return points[..., :3]
 
 
+def get_camera_pointcloud(
+    sim,
+    camera_name,
+    camera_height,
+    camera_width,
+    return_rgb=True,
+    return_segmentation=False,
+    depth_max=None,
+):
+    """
+    Renders a single camera and back-projects its depth image into a world-frame point cloud (one 3D
+    point per pixel). Optionally returns the per-point RGB color and a per-point segmentation label.
+
+    Back-projection uses robosuite's own camera matrices: each pixel ``(row, col)`` with linearized
+    depth ``z`` maps to world coordinates via ``inv(get_camera_transform_matrix) @ [col*z, row*z, z, 1]``.
+    Note the *full matrix* inverse is required (the transform contains the intrinsics ``K`` and is not a
+    rigid SE(3) transform, so ``transform_utils.pose_inv`` must NOT be used here).
+
+    The sim must be at the desired state (call ``sim.forward()`` after setting state) before rendering.
+
+    Args:
+        sim (MjSim): simulator instance.
+        camera_name (str): name of the camera to render.
+        camera_height (int): render height in pixels.
+        camera_width (int): render width in pixels.
+        return_rgb (bool): if True, also return the per-point RGB color (uint8, [N, 3]).
+        return_segmentation (bool): if True, also return per-point geom and body ids ([N], [N]); these
+            come from MuJoCo's segmentation render (geom id per pixel) mapped to the owning body.
+        depth_max (float or None): if set, drop points whose (linearized) depth exceeds this many
+            meters -- useful to discard far background (walls/floor/skybox) behind the workspace.
+
+    Returns:
+        dict with keys:
+            :`'points'`: (N, 3) float world-frame coordinates
+            :`'rgb'`: (N, 3) uint8 colors (only if @return_rgb)
+            :`'geom_ids'`: (N,) int geom id per point, -1 for none (only if @return_segmentation)
+            :`'body_ids'`: (N,) int owning body id per point, -1 for none (only if @return_segmentation)
+    """
+    H, W = camera_height, camera_width
+
+    # RGB + depth share a render call; the segmentation buffer needs its own.
+    rgb, depth = sim.render(height=H, width=W, camera_name=camera_name, depth=True)
+    rgb = rgb[::-1].copy()
+    depth = depth[::-1].copy()
+    real_depth = get_real_depth_map(sim, depth[..., None])[..., 0]  # (H, W) in meters
+
+    # Pixel grid (row, col) -> world via the inverted camera transform matrix.
+    world_to_pix = get_camera_transform_matrix(sim=sim, camera_name=camera_name, camera_height=H, camera_width=W)
+    pix_to_world = np.linalg.inv(world_to_pix)
+    rows, cols = np.meshgrid(np.arange(H), np.arange(W), indexing="ij")
+    z = real_depth.reshape(-1)
+    c = cols.reshape(-1).astype(np.float64)
+    r = rows.reshape(-1).astype(np.float64)
+    hom = np.stack([c * z, r * z, z, np.ones_like(z)], axis=0)  # (4, N)
+    points = (pix_to_world @ hom)[:3].T  # (N, 3)
+
+    keep = np.ones(points.shape[0], dtype=bool)
+    if depth_max is not None:
+        keep &= z <= depth_max
+
+    out = {"points": points[keep]}
+    if return_rgb:
+        out["rgb"] = rgb.reshape(-1, 3)[keep]
+    if return_segmentation:
+        seg = get_camera_segmentation(sim, camera_name, H, W)  # (H, W, 2): [objtype, objid]
+        geom_ids = seg[..., 1].reshape(-1).astype(np.int64)  # objid is the geom id (or -1)
+        geom_bodyid = np.array(sim.model.geom_bodyid)
+        body_ids = np.where(geom_ids >= 0, geom_bodyid[np.clip(geom_ids, 0, None)], -1)
+        out["geom_ids"] = geom_ids[keep]
+        out["body_ids"] = body_ids[keep]
+    return out
+
+
 def bilinear_interpolate(im, x, y):
     """
     Bilinear sampling for pixel coordinates x and y from source image im.

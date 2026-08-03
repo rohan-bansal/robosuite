@@ -2,6 +2,8 @@ import copy
 import xml.etree.ElementTree as ET
 from copy import deepcopy
 
+import numpy as np
+
 import robosuite.macros as macros
 from robosuite.models.base import MujocoModel, MujocoXML
 from robosuite.utils.mjcf_utils import (
@@ -260,6 +262,16 @@ class MujocoObject(MujocoModel):
         """
         raise NotImplementedError
 
+    def get_bounding_box_half_size(self):
+        # backported verbatim from robosuite v1.5.0 (mimicgen's composite objects, e.g. CoffeeMachine, call it)
+        raise NotImplementedError
+
+    def get_bounding_box_size(self):
+        """
+        Returns numpy array with dimensions of a bounding box around this object.
+        """
+        return 2.0 * self.get_bounding_box_half_size()
+
     @staticmethod
     def get_site_attrib_template():
         """
@@ -460,6 +472,13 @@ class MujocoXMLObject(MujocoObject, MujocoXML):
         )
         return string_to_array(horizontal_radius_site.get("pos"))[0]
 
+    def get_bounding_box_half_size(self):
+        # backported verbatim from robosuite v1.5.0
+        horizontal_radius_site = self.worldbody.find(
+            "./body/site[@name='{}horizontal_radius_site']".format(self.naming_prefix)
+        )
+        return string_to_array(horizontal_radius_site.get("pos")) - self.bottom_offset
+
 
 class MujocoGeneratedObject(MujocoObject):
     """
@@ -567,3 +586,7 @@ class MujocoGeneratedObject(MujocoObject):
 
     def horizontal_radius(self):
         raise NotImplementedError
+
+    def get_bounding_box_half_size(self):
+        # backported verbatim from robosuite v1.5.0
+        return np.array([self.horizontal_radius, self.horizontal_radius, 0.0]) - self.bottom_offset

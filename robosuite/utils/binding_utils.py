@@ -172,6 +172,9 @@ class MjRenderContext:
 
         ret_img = rgb_img
         if segmentation:
+            # Cast to a wide int dtype first: composing the 24-bit id from uint8 channels overflows
+            # under newer NumPy (uint8 * 256 raises OverflowError).
+            rgb_img = rgb_img.astype(np.int32)
             seg_img = rgb_img[:, :, 0] + rgb_img[:, :, 1] * (2**8) + rgb_img[:, :, 2] * (2**16)
             seg_img[seg_img >= (self.scn.ngeom + 1)] = 0
             seg_ids = np.full((self.scn.ngeom + 1, 2), fill_value=-1, dtype=np.int32)
